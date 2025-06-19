@@ -324,7 +324,7 @@ Remember to practice your delivery and maintain eye contact with the camera whil
                 </div>
                 <div class="control-item">
                     <label for="scrollSpeed">Scroll Speed</label>
-                    <input type="range" id="scrollSpeed" min="1" max="20" value="2">
+                    <input type="range" id="scrollSpeed" min="1" max="20" value="5">
                     <div class="range-value" id="scrollSpeedValue">5</div>
                 </div>
             </div>
@@ -380,6 +380,16 @@ Remember to practice your delivery and maintain eye contact with the camera whil
                 <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
             </svg>
         </button>
+        <button class="control-btn" id="backBtn" title="Scroll Back">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+            </svg>
+        </button>
+        <button class="control-btn" id="forwardBtn" title="Scroll Forward">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+            </svg>
+        </button>
         <button class="control-btn" id="exitBtn" title="Exit Fullscreen">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -394,7 +404,7 @@ Remember to practice your delivery and maintain eye contact with the camera whil
             this.isPlaying = false;
             this.isPaused = false;
             this.scrollPosition = 0;
-            this.scrollSpeed = 2;
+            this.scrollSpeed = 5;
             this.animationId = null;
 
             this.initializeElements();
@@ -422,6 +432,8 @@ Remember to practice your delivery and maintain eye contact with the camera whil
             this.pauseBtn = document.getElementById('pauseBtn');
             this.slowBtn = document.getElementById('slowBtn');
             this.fastBtn = document.getElementById('fastBtn');
+            this.backBtn = document.getElementById('backBtn');
+            this.forwardBtn = document.getElementById('forwardBtn');
             this.exitBtn = document.getElementById('exitBtn');
         }
 
@@ -439,6 +451,8 @@ Remember to practice your delivery and maintain eye contact with the camera whil
             this.pauseBtn.addEventListener('click', () => this.togglePause());
             this.slowBtn.addEventListener('click', () => this.adjustSpeed(-1));
             this.fastBtn.addEventListener('click', () => this.adjustSpeed(1));
+            this.backBtn.addEventListener('click', () => this.manualScroll(-100));
+            this.forwardBtn.addEventListener('click', () => this.manualScroll(100));
             this.exitBtn.addEventListener('click', () => this.exitFullscreen());
 
             // Keyboard controls
@@ -514,14 +528,7 @@ Remember to practice your delivery and maintain eye contact with the camera whil
 
                 if (!this.isPaused) {
                     this.scrollPosition += this.scrollSpeed * 0.5;
-
-                    // Combine all transformations
-                    let transform = '';
-                    if (this.reverseText.checked) transform += 'scaleX(-1) ';
-                    if (this.horizontalFlip.checked) transform += 'scaleY(-1) ';
-                    transform += `translateY(-${this.scrollPosition}px)`;
-
-                    this.teleprompterText.style.transform = transform;
+                    this.updateTextPosition();
                 }
 
                 this.animationId = requestAnimationFrame(scroll);
@@ -545,6 +552,34 @@ Remember to practice your delivery and maintain eye contact with the camera whil
             this.scrollSpeed = Math.max(1, Math.min(20, this.scrollSpeed + delta));
             this.scrollSpeedControl.value = this.scrollSpeed;
             this.scrollSpeedValue.textContent = this.scrollSpeed;
+        }
+
+        manualScroll(delta) {
+            this.scrollPosition = Math.max(0, this.scrollPosition + delta);
+            this.updateTextPosition();
+        }
+
+        jumpToStart() {
+            this.scrollPosition = 0;
+            this.updateTextPosition();
+        }
+
+        jumpToEnd() {
+            // Estimate end position based on text height
+            const textHeight = this.teleprompterText.scrollHeight;
+            const windowHeight = window.innerHeight;
+            this.scrollPosition = Math.max(0, textHeight - windowHeight + 200);
+            this.updateTextPosition();
+        }
+
+        updateTextPosition() {
+            // Update text position with current transformations
+            let transform = '';
+            if (this.reverseText.checked) transform += 'scaleX(-1) ';
+            if (this.horizontalFlip.checked) transform += 'scaleY(-1) ';
+            transform += `translateY(-${this.scrollPosition}px)`;
+
+            this.teleprompterText.style.transform = transform;
         }
 
         exitFullscreen() {
@@ -580,12 +615,46 @@ Remember to practice your delivery and maintain eye contact with the camera whil
                     this.togglePause();
                     break;
                 case 'ArrowUp':
+                    // Check if Shift is held for speed control, otherwise manual scroll
                     e.preventDefault();
-                    this.adjustSpeed(1);
+                    if (e.shiftKey) {
+                        this.adjustSpeed(1);
+                    } else {
+                        this.manualScroll(-30); // Scroll up
+                    }
                     break;
                 case 'ArrowDown':
+                    // Check if Shift is held for speed control, otherwise manual scroll
                     e.preventDefault();
-                    this.adjustSpeed(-1);
+                    if (e.shiftKey) {
+                        this.adjustSpeed(-1);
+                    } else {
+                        this.manualScroll(30); // Scroll down
+                    }
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    this.manualScroll(-60); // Bigger jump backward
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    this.manualScroll(60); // Bigger jump forward
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    this.jumpToStart();
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    this.jumpToEnd();
+                    break;
+                case 'PageUp':
+                    e.preventDefault();
+                    this.manualScroll(-200); // Large jump backward
+                    break;
+                case 'PageDown':
+                    e.preventDefault();
+                    this.manualScroll(200); // Large jump forward
                     break;
                 case 'Escape':
                     e.preventDefault();
