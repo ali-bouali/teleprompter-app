@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teleprompter Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            fill: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-item label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .range-value {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .play-button {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .play-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.6);
+        }
+
+        .play-button:active {
+            transform: translateY(0);
+        }
+
+        /* Fullscreen styles */
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .teleprompter-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 50px;
+            overflow: hidden;
+        }
+
+        .teleprompter-text {
+            color: white;
+            line-height: 1.8;
+            text-align: center;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            transform-origin: center top;
+        }
+
+        .controls-overlay {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .control-btn.active {
+            background: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .control-panel {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📺 Teleprompter Pro</h1>
+        <p>Professional teleprompter for iPad and tablets</p>
+    </div>
+
+    <div class="control-panel">
+        <div class="section">
+            <div class="section-title">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                Script Content
+            </div>
+            <div class="form-group">
+                <label for="scriptText">Enter your script:</label>
+                <textarea id="scriptText" placeholder="Paste or type your teleprompter script here...">Welcome to Teleprompter Pro!
+
+This is a sample text to demonstrate the teleprompter functionality. You can replace this text with your own script.
+
+The text will scroll automatically when you press play, and you can control the speed and appearance using the settings below.
+
+Remember to practice your delivery and maintain eye contact with the camera while reading from the teleprompter.</textarea>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M7,6H17V19H7V6M9,8V17H11V8H9M13,8V17H15V8H13Z"/>
+                </svg>
+                Text Appearance
+            </div>
+            <div class="controls-grid">
+                <div class="control-item">
+                    <label for="fontSize">Font Size</label>
+                    <input type="range" id="fontSize" min="24" max="120" value="48">
+                    <div class="range-value" id="fontSizeValue">48px</div>
+                </div>
+                <div class="control-item">
+                    <label for="scrollSpeed">Scroll Speed</label>
+                    <input type="range" id="scrollSpeed" min="1" max="20" value="5">
+                    <div class="range-value" id="scrollSpeedValue">5</div>
+                </div>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="reverseText">
+                <label for="reverseText">Reverse text (mirror for teleprompter)</label>
+            </div>
+        </div>
+
+        <button class="play-button" id="playButton">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+            Start Teleprompter
+        </button>
+    </div>
+</div>
+
+<!-- Fullscreen Teleprompter -->
+<div class="fullscreen" id="fullscreen">
+    <div class="teleprompter-content">
+        <div class="teleprompter-text" id="teleprompterText"></div>
+    </div>
+    <div class="controls-overlay">
+        <button class="control-btn" id="pauseBtn" title="Pause/Resume">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+        </button>
+        <button class="control-btn" id="slowBtn" title="Slower">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/>
+            </svg>
+        </button>
+        <button class="control-btn" id="fastBtn" title="Faster">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
+            </svg>
+        </button>
+        <button class="control-btn" id="exitBtn" title="Exit Fullscreen">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    class TeleprompterApp {
+        constructor() {
+            this.isPlaying = false;
+            this.isPaused = false;
+            this.scrollPosition = 0;
+            this.scrollSpeed = 5;
+            this.animationId = null;
+
+            this.initializeElements();
+            this.bindEvents();
+            this.updateValues();
+        }
+
+        initializeElements() {
+            this.scriptText = document.getElementById('scriptText');
+            this.fontSize = document.getElementById('fontSize');
+            this.fontSizeValue = document.getElementById('fontSizeValue');
+            this.scrollSpeedControl = document.getElementById('scrollSpeed');
+            this.scrollSpeedValue = document.getElementById('scrollSpeedValue');
+            this.reverseText = document.getElementById('reverseText');
+            this.playButton = document.getElementById('playButton');
+            this.fullscreen = document.getElementById('fullscreen');
+            this.teleprompterText = document.getElementById('teleprompterText');
+
+            // Control buttons
+            this.pauseBtn = document.getElementById('pauseBtn');
+            this.slowBtn = document.getElementById('slowBtn');
+            this.fastBtn = document.getElementById('fastBtn');
+            this.exitBtn = document.getElementById('exitBtn');
+        }
+
+        bindEvents() {
+            // Range inputs
+            this.fontSize.addEventListener('input', () => this.updateValues());
+            this.scrollSpeedControl.addEventListener('input', () => this.updateValues());
+
+            // Play button
+            this.playButton.addEventListener('click', () => this.startTeleprompter());
+
+            // Control buttons
+            this.pauseBtn.addEventListener('click', () => this.togglePause());
+            this.slowBtn.addEventListener('click', () => this.adjustSpeed(-1));
+            this.fastBtn.addEventListener('click', () => this.adjustSpeed(1));
+            this.exitBtn.addEventListener('click', () => this.exitFullscreen());
+
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+
+            // Touch controls for mobile
+            this.fullscreen.addEventListener('touchstart', (e) => this.handleTouch(e));
+        }
+
+        updateValues() {
+            this.fontSizeValue.textContent = this.fontSize.value + 'px';
+            this.scrollSpeedValue.textContent = this.scrollSpeedControl.value;
+            this.scrollSpeed = parseInt(this.scrollSpeedControl.value);
+        }
+
+        startTeleprompter() {
+            if (!this.scriptText.value.trim()) {
+                alert('Please enter some text first!');
+                return;
+            }
+
+            this.prepareFullscreen();
+            this.enterFullscreen();
+            this.startScrolling();
+        }
+
+        prepareFullscreen() {
+            const text = this.scriptText.value;
+            const fontSize = this.fontSize.value + 'px';
+            const isReversed = this.reverseText.checked;
+
+            this.teleprompterText.textContent = text;
+            this.teleprompterText.style.fontSize = fontSize;
+            this.teleprompterText.style.transform = isReversed ? 'scaleX(-1)' : 'scaleX(1)';
+
+            this.scrollPosition = 0;
+            this.isPaused = false;
+            this.isPlaying = true;
+        }
+
+        enterFullscreen() {
+            this.fullscreen.style.display = 'block';
+
+            // Request fullscreen on the fullscreen element
+            if (this.fullscreen.requestFullscreen) {
+                this.fullscreen.requestFullscreen();
+            } else if (this.fullscreen.webkitRequestFullscreen) {
+                this.fullscreen.webkitRequestFullscreen();
+            } else if (this.fullscreen.msRequestFullscreen) {
+                this.fullscreen.msRequestFullscreen();
+            }
+        }
+
+        startScrolling() {
+            const scroll = () => {
+                if (!this.isPlaying) return;
+
+                if (!this.isPaused) {
+                    this.scrollPosition += this.scrollSpeed * 0.5;
+                    this.teleprompterText.style.transform =
+                        (this.reverseText.checked ? 'scaleX(-1) ' : '') +
+                        `translateY(-${this.scrollPosition}px)`;
+                }
+
+                this.animationId = requestAnimationFrame(scroll);
+            };
+
+            scroll();
+        }
+
+        togglePause() {
+            this.isPaused = !this.isPaused;
+            this.pauseBtn.classList.toggle('active', this.isPaused);
+
+            // Update pause button icon
+            const icon = this.isPaused ?
+                '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' :
+                '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            this.pauseBtn.innerHTML = icon;
+        }
+
+        adjustSpeed(delta) {
+            this.scrollSpeed = Math.max(1, Math.min(20, this.scrollSpeed + delta));
+            this.scrollSpeedControl.value = this.scrollSpeed;
+            this.scrollSpeedValue.textContent = this.scrollSpeed;
+        }
+
+        exitFullscreen() {
+            this.isPlaying = false;
+            this.isPaused = false;
+
+            if (this.animationId) {
+                cancelAnimationFrame(this.animationId);
+            }
+
+            this.fullscreen.style.display = 'none';
+
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+
+            // Reset pause button
+            this.pauseBtn.classList.remove('active');
+            this.pauseBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+        }
+
+        handleKeyboard(e) {
+            if (!this.isPlaying) return;
+
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    this.togglePause();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    this.adjustSpeed(1);
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    this.adjustSpeed(-1);
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    this.exitFullscreen();
+                    break;
+            }
+        }
+
+        handleTouch(e) {
+            if (!this.isPlaying) return;
+
+            // Single tap to pause/resume
+            if (e.touches.length === 1) {
+                setTimeout(() => {
+                    if (e.touches.length === 1) {
+                        this.togglePause();
+                    }
+                }, 200);
+            }
+        }
+    }
+
+    // Initialize the app when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        new TeleprompterApp();
+    });
+
+    // Handle fullscreen changes
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    function handleFullscreenChange() {
+        const fullscreenElement = document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.msFullscreenElement;
+
+        if (!fullscreenElement) {
+            // User exited fullscreen using browser controls
+            const fullscreen = document.getElementById('fullscreen');
+            if (fullscreen.style.display === 'block') {
+                // Trigger exit function
+                const event = new CustomEvent('exitTeleprompter');
+                document.dispatchEvent(event);
+            }
+        }
+    }
+
+    // Listen for custom exit event
+    document.addEventListener('exitTeleprompter', () => {
+        const app = window.teleprompterApp;
+        if (app) {
+            app.exitFullscreen();
+        }
+    });
+</script>
+</body>
+</html>
