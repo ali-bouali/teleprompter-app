@@ -333,6 +333,10 @@ Remember to practice your delivery and maintain eye contact with the camera whil
                 <input type="checkbox" id="reverseText">
                 <label for="reverseText">Reverse text (mirror for teleprompter)</label>
             </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="horizontalFlip">
+                <label for="horizontalFlip">Horizontal flip (for right-to-left display)</label>
+            </div>
         </div>
 
         <button class="play-button" id="playButton">
@@ -394,6 +398,7 @@ Remember to practice your delivery and maintain eye contact with the camera whil
             this.scrollSpeedControl = document.getElementById('scrollSpeed');
             this.scrollSpeedValue = document.getElementById('scrollSpeedValue');
             this.reverseText = document.getElementById('reverseText');
+            this.horizontalFlip = document.getElementById('horizontalFlip');
             this.playButton = document.getElementById('playButton');
             this.fullscreen = document.getElementById('fullscreen');
             this.teleprompterText = document.getElementById('teleprompterText');
@@ -447,10 +452,16 @@ Remember to practice your delivery and maintain eye contact with the camera whil
             const text = this.scriptText.value;
             const fontSize = this.fontSize.value + 'px';
             const isReversed = this.reverseText.checked;
+            const isFlipped = this.horizontalFlip.checked;
 
             this.teleprompterText.textContent = text;
             this.teleprompterText.style.fontSize = fontSize;
-            this.teleprompterText.style.transform = isReversed ? 'scaleX(-1)' : 'scaleX(1)';
+
+            // Combine transformations
+            let transform = '';
+            if (isReversed) transform += 'scaleX(-1) ';
+            if (isFlipped) transform += 'scaleY(-1) ';
+            this.teleprompterText.style.transform = transform.trim() || 'none';
 
             this.scrollPosition = 0;
             this.isPaused = false;
@@ -476,9 +487,14 @@ Remember to practice your delivery and maintain eye contact with the camera whil
 
                 if (!this.isPaused) {
                     this.scrollPosition += this.scrollSpeed * 0.5;
-                    this.teleprompterText.style.transform =
-                        (this.reverseText.checked ? 'scaleX(-1) ' : '') +
-                        `translateY(-${this.scrollPosition}px)`;
+
+                    // Combine all transformations
+                    let transform = '';
+                    if (this.reverseText.checked) transform += 'scaleX(-1) ';
+                    if (this.horizontalFlip.checked) transform += 'scaleY(-1) ';
+                    transform += `translateY(-${this.scrollPosition}px)`;
+
+                    this.teleprompterText.style.transform = transform;
                 }
 
                 this.animationId = requestAnimationFrame(scroll);
