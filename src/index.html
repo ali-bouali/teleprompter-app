@@ -218,7 +218,6 @@
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            padding: 50px;
             overflow: hidden;
         }
 
@@ -329,6 +328,18 @@ Remember to practice your delivery and maintain eye contact with the camera whil
                     <div class="range-value" id="scrollSpeedValue">5</div>
                 </div>
             </div>
+            <div class="controls-grid">
+                <div class="control-item">
+                    <label for="topMargin">Top Margin</label>
+                    <input type="range" id="topMargin" min="0" max="300" value="50">
+                    <div class="range-value" id="topMarginValue">50px</div>
+                </div>
+                <div class="control-item">
+                    <label for="sideMargin">Side Margin</label>
+                    <input type="range" id="sideMargin" min="20" max="200" value="50">
+                    <div class="range-value" id="sideMarginValue">50px</div>
+                </div>
+            </div>
             <div class="checkbox-group">
                 <input type="checkbox" id="reverseText">
                 <label for="reverseText">Reverse text (mirror for teleprompter)</label>
@@ -397,6 +408,10 @@ Remember to practice your delivery and maintain eye contact with the camera whil
             this.fontSizeValue = document.getElementById('fontSizeValue');
             this.scrollSpeedControl = document.getElementById('scrollSpeed');
             this.scrollSpeedValue = document.getElementById('scrollSpeedValue');
+            this.topMargin = document.getElementById('topMargin');
+            this.topMarginValue = document.getElementById('topMarginValue');
+            this.sideMargin = document.getElementById('sideMargin');
+            this.sideMarginValue = document.getElementById('sideMarginValue');
             this.reverseText = document.getElementById('reverseText');
             this.horizontalFlip = document.getElementById('horizontalFlip');
             this.playButton = document.getElementById('playButton');
@@ -414,6 +429,8 @@ Remember to practice your delivery and maintain eye contact with the camera whil
             // Range inputs
             this.fontSize.addEventListener('input', () => this.updateValues());
             this.scrollSpeedControl.addEventListener('input', () => this.updateValues());
+            this.topMargin.addEventListener('input', () => this.updateValues());
+            this.sideMargin.addEventListener('input', () => this.updateValues());
 
             // Play button
             this.playButton.addEventListener('click', () => this.startTeleprompter());
@@ -434,6 +451,8 @@ Remember to practice your delivery and maintain eye contact with the camera whil
         updateValues() {
             this.fontSizeValue.textContent = this.fontSize.value + 'px';
             this.scrollSpeedValue.textContent = this.scrollSpeedControl.value;
+            this.topMarginValue.textContent = this.topMargin.value + 'px';
+            this.sideMarginValue.textContent = this.sideMargin.value + 'px';
             this.scrollSpeed = parseInt(this.scrollSpeedControl.value);
         }
 
@@ -451,11 +470,19 @@ Remember to practice your delivery and maintain eye contact with the camera whil
         prepareFullscreen() {
             const text = this.scriptText.value;
             const fontSize = this.fontSize.value + 'px';
+            const topMargin = this.topMargin.value + 'px';
+            const sideMargin = this.sideMargin.value + 'px';
             const isReversed = this.reverseText.checked;
             const isFlipped = this.horizontalFlip.checked;
 
             this.teleprompterText.textContent = text;
             this.teleprompterText.style.fontSize = fontSize;
+
+            // Set margins
+            const content = document.querySelector('.teleprompter-content');
+            content.style.paddingTop = topMargin;
+            content.style.paddingLeft = sideMargin;
+            content.style.paddingRight = sideMargin;
 
             // Combine transformations
             let transform = '';
